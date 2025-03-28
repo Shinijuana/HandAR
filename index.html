@@ -94,19 +94,36 @@
             drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
             drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
 
-            // Posizione del punto indice (landmark 7)
-            const indexFingerTip = landmarks[6]; // Landmark 8 è la punta dell'indice
+            // Posizione del punto indice (landmark 8)
+            const indexFingerTip = landmarks[8];  
             
             // Disegna un cerchio (anello) sull'indice
             canvasCtx.beginPath();
-            canvasCtx.arc(indexFingerTip.x * canvasElement.width, indexFingerTip.y * canvasElement.height, 20, 0, 2 * Math.PI); // 20 è la dimensione dell'anello
-            canvasCtx.strokeStyle = '#00FF00'; // Colore dell'anello
-            canvasCtx.lineWidth = 4; // Spessore dell'anello
+            canvasCtx.arc(indexFingerTip.x * canvasElement.width, indexFingerTip.y * canvasElement.height, 20, 0, 2 * Math.PI);
+            canvasCtx.strokeStyle = '#00FF00'; 
+            canvasCtx.lineWidth = 4;
             canvasCtx.stroke();
+
+            // 📌 Debug Pinch Gesture
+            if (isPinching(landmarks)) {
+                console.log("Pinch rilevato!");
+            }
         }
     }
 });
 
+        
+function isPinching(handLandmarks) {
+    let thumbTip = handLandmarks[4];  // Punta del pollice
+    let indexTip = handLandmarks[8];  // Punta dell’indice
+
+    let distance = Math.sqrt(
+        Math.pow(thumbTip.x - indexTip.x, 2) + 
+        Math.pow(thumbTip.y - indexTip.y, 2)
+    );
+
+    return distance < 0.05; // Soglia per rilevare il pinch
+}
 
         // 📌 Aggiungere un listener per l'orientamento
         window.addEventListener('resize', updateResolution);
