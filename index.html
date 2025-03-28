@@ -16,8 +16,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            transform: scaleX(-1); /* Inverte l'immagine per fotocamera frontale */
+            object-fit: contain; /* Cambia l'adattamento del video senza distorcere */
+            transform: scaleX(-1); /* Inverti l'immagine per fotocamera frontale */
         }
         canvas {
             pointer-events: none;
@@ -109,8 +109,8 @@
                 videoHeight = window.innerHeight;
             } else {
                 // Modalità verticale 9:16
-                videoWidth = window.innerHeight;
-                videoHeight = window.innerWidth;
+                videoWidth = window.innerWidth; // Usa l'intera larghezza dello schermo
+                videoHeight = window.innerHeight; // Usa l'intera altezza dello schermo
             }
             adjustCanvasSize();
             startCamera(); // Riavvia la fotocamera con la nuova risoluzione
