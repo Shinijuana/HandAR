@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -9,8 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: black; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-
+        body { background: black; overflow: hidden; }
         video, canvas {
             position: absolute;
             top: 0;
@@ -20,21 +20,19 @@
             object-fit: contain;
             transform: scaleX(-1);
         }
-
         #openPopup {
             position: absolute;
-            width: 150px;
-            height: 150px;
-            background: #0000FF;
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            background: #00FF00;
             color: black;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 16px;
             border: none;
-            border-radius: 15px;
+            border-radius: 5px;
             cursor: pointer;
             z-index: 10;
         }
-
         canvas { pointer-events: none; }
     </style>
 </head>
@@ -47,14 +45,23 @@
         const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('output');
         const canvasCtx = canvasElement.getContext('2d');
-        const openPopupButton = document.getElementById("openPopup");
 
-        let pinchActive = false;
+        let videoWidth = window.innerWidth;
+        let videoHeight = window.innerHeight;
+        let pinchActive = false; // ✅ Spostato all'esterno per evitare reset continui
 
         // 📌 Avvia la fotocamera
         async function startCamera() {
+            const constraints = {
+                video: {
+                    width: { ideal: videoWidth },
+                    height: { ideal: videoHeight },
+                    facingMode: { ideal: 'environment' }
+                }
+            };
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
                 videoElement.onloadedmetadata = () => {
                     videoElement.play();
@@ -89,11 +96,15 @@
             width: window.innerWidth,
             height: window.innerHeight
         });
-
         camera.start();
 
-        // ✅ Rilevamento pinch
-        hands.onResults((results) => {
+        // ✅ Click sul bottone manuale
+        document.getElementById("openPopup").addEventListener("click", () => {
+            window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
+        });
+
+        // 📌 Rilevamento pinch
+       hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (results.multiHandLandmarks) {
@@ -125,6 +136,17 @@
 
             console.log("🔍 Distanza tra pollice e indice:", distance);
             return distance < 0.05; // Considera un pinch se la distanza è inferiore a una certa soglia
+        }
+
+        // 📌 Risoluzione dinamica
+        window.addEventListener('resize', updateResolution);
+        window.addEventListener('orientationchange', updateResolution);
+
+        function updateResolution() {
+            videoWidth = window.innerWidth;
+            videoHeight = window.innerHeight;
+            adjustCanvasSize();
+            startCamera();
         }
 
         startCamera();
