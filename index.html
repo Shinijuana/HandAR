@@ -21,14 +21,16 @@
         }
         #openPopup {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 10px 15px;
-            background: #00FF00;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            background: #0000FF;
             color: black;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
             z-index: 10;
         }
@@ -36,7 +38,7 @@
     </style>
 </head>
 <body>
-    <button id="openPopup">DOS</button>
+    <button id="openPopup">Apri DOS</button>
     <video id="video" autoplay playsinline></video>
     <canvas id="output"></canvas>
 
@@ -47,7 +49,6 @@
 
         let videoWidth = window.innerWidth;
         let videoHeight = window.innerHeight;
-        let pinchActive = false; // ✅ Spostato all'esterno per evitare reset continui
 
         // 📌 Avvia la fotocamera
         async function startCamera() {
@@ -97,12 +98,11 @@
         });
         camera.start();
 
-        // ✅ Click sul bottone manuale
+        // ✅ Click sul bottone per aprire il sito
         document.getElementById("openPopup").addEventListener("click", () => {
             window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
         });
 
-        // 📌 Rilevamento pinch
         hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
@@ -110,31 +110,9 @@
                 for (const landmarks of results.multiHandLandmarks) {
                     drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
                     drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
-
-                    if (isPinching(landmarks) && !pinchActive) {
-                        pinchActive = true;
-                        console.log("Pinch rilevato! Aprendo popup...");
-                        window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
-
-                        setTimeout(() => {
-                            pinchActive = false; // Reset dopo 1 secondo
-                        }, 1000);
-                    }
                 }
             }
         });
-
-        function isPinching(handLandmarks) {
-            let thumbTip = handLandmarks[4];  
-            let indexTip = handLandmarks[8];
-
-            let distance = Math.sqrt(
-                Math.pow(thumbTip.x - indexTip.x, 2) + 
-                Math.pow(thumbTip.y - indexTip.y, 2)
-            );
-
-            return distance < 0.05;
-        }
 
         // 📌 Risoluzione dinamica
         window.addEventListener('resize', updateResolution);
