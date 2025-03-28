@@ -16,11 +16,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Cambiato da 'cover' a 'contain' per evitare tagli */
-            transform: scaleX(-1); /* Inverte l'immagine per emulare una fotocamera frontale */
+            object-fit: contain; /* Impedisce il taglio dell'immagine */
+            transform: scaleX(-1); /* Inverte l'immagine per fotocamera frontale */
         }
         canvas {
-            pointer-events: none; /* Evita interazioni con il canvas */
+            pointer-events: none;
         }
     </style>
 </head>
@@ -32,101 +32,92 @@
         const canvasElement = document.getElementById('output');
         const canvasCtx = canvasElement.getContext('2d');
 
-        // 📌 Funzione per ottenere la risoluzione adattiva
-        function getResponsiveResolution() {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+        let videoWidth = window.innerWidth;
+        let videoHeight = window.innerHeight;
 
-            // Se il dispositivo è in modalità orizzontale (16:9)
-            if (window.orientation === 90 || window.orientation === -90) {
-                return { width: height, height: width };
-            } else {
-                // Se il dispositivo è in modalità verticale (9:16)
-                return { width: width, height: height };
-            }
-        }
-
-        // 📌 Imposta la fotocamera con risoluzione responsiva
+        // 📌 Funzione per avviare la fotocamera
         async function startCamera() {
-            const { width, height } = getResponsiveResolution();  // Otteniamo la risoluzione in base all'orientamento del dispositivo
-
-            let constraints = {
+            const constraints = {
                 video: {
-                    width: { ideal: width },
-                    height: { ideal: height },
-                    facingMode: { ideal: "environment" } // Preferisce la fotocamera posteriore
+                    width: { ideal: videoWidth },
+                    height: { ideal: videoHeight },
+                    facingMode: { ideal: 'environment' }
                 }
             };
 
             try {
-                let stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
                 videoElement.onloadedmetadata = () => {
                     videoElement.play();
-                    adjustCanvasSize(width, height);
+                    adjustCanvasSize();
                 };
             } catch (err) {
-                console.error("Errore accesso webcam:", err);
+                console.error("Errore fotocamera:", err);
             }
         }
 
-        // 📌 Adatta il canvas alle dimensioni dello schermo
-        function adjustCanvasSize(width, height) {
-            canvasElement.width = width;
-            canvasElement.height = height;
+        // 📌 Funzione per ridimensionare il canvas
+        function adjustCanvasSize() {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
         }
 
-        // 📌 Configura MediaPipe Hands
+        // 📌 Impostazione di MediaPipe Hands
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@latest/${file}`
         });
 
         hands.setOptions({
             maxNumHands: 2,
-            modelComplexity: 1, // Restituisce una maggiore precisione
+            modelComplexity: 1, // Bassa complessità per performance migliori
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5
         });
 
-        // 📌 Usa il video come input per MediaPipe
+        // 📌 Impostiamo il flusso di video per MediaPipe
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await hands.send({ image: videoElement });
             },
-            width: window.innerWidth,  // Si adatta alla larghezza dinamica
-            height: window.innerHeight, // Si adatta all'altezza dinamica
+            width: window.innerWidth,
+            height: window.innerHeight
         });
         camera.start();
 
-        // 📌 Disegna le mani in modo allineato
+        // 📌 Disegnare le mani sul canvas
         hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
+
             if (results.multiHandLandmarks) {
                 for (const landmarks of results.multiHandLandmarks) {
-                    // Disegna i connettori tra i punti della mano
                     drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
-                    // Disegna i punti delle mani
                     drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
                 }
             }
         });
 
-        // 📌 Avvia la fotocamera
+        // 📌 Aggiungere un listener per l'orientamento
+        window.addEventListener('resize', updateResolution);
+        window.addEventListener('orientationchange', updateResolution);
+
+        // 📌 Funzione che aggiorna risoluzione e ridimensiona tutto
+        function updateResolution() {
+            if (window.innerWidth > window.innerHeight) {
+                // Modalità orizzontale 16:9
+                videoWidth = window.innerWidth;
+                videoHeight = window.innerHeight;
+            } else {
+                // Modalità verticale 9:16
+                videoWidth = window.innerHeight;
+                videoHeight = window.innerWidth;
+            }
+            adjustCanvasSize();
+            startCamera(); // Riavvia la fotocamera con la nuova risoluzione
+        }
+
+        // 📌 Avvia la fotocamera inizialmente
         startCamera();
-
-        // 📌 Gestisci il ridimensionamento dello schermo in tempo reale
-        window.addEventListener('resize', () => {
-            const { width, height } = getResponsiveResolution();
-            adjustCanvasSize(width, height);
-        });
-
-        // 📌 Gestisci l'orientamento del dispositivo per regolare correttamente la fotocamera e il canvas
-        window.addEventListener('orientationchange', () => {
-            const { width, height } = getResponsiveResolution();
-            adjustCanvasSize(width, height);
-            startCamera();  // Rilancia la fotocamera per aggiornare la risoluzione
-        });
     </script>
 </body>
 </html>
