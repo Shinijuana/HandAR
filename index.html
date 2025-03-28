@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand Tracking con MediaPipe e modello 3D</title>
+    <title>Hand Tracking con MediaPipe</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.133.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.133.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: black; overflow: hidden; }
@@ -37,22 +35,7 @@
         let videoWidth = window.innerWidth;
         let videoHeight = window.innerHeight;
 
-        // Inizializzazione di three.js
-        const scene = new THREE.Scene();
-        const camera3D = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        // Carica il modello .glb
-        const loader = new THREE.GLTFLoader();
-        let ringModel = null;
-        loader.load('ring.glb', function (gltf) {
-            ringModel = gltf.scene;
-            scene.add(ringModel);
-        });
-
-        // Funzione per avviare la fotocamera
+        // 📌 Funzione per avviare la fotocamera
         async function startCamera() {
             const constraints = {
                 video: {
@@ -74,13 +57,13 @@
             }
         }
 
-        // Funzione per ridimensionare il canvas
+        // 📌 Funzione per ridimensionare il canvas
         function adjustCanvasSize() {
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
         }
 
-        // Configura MediaPipe Hands
+        // 📌 Impostazione di MediaPipe Hands
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@latest/${file}`
         });
@@ -92,7 +75,7 @@
             minTrackingConfidence: 0.5
         });
 
-        // Impostiamo il flusso di video per MediaPipe
+        // 📌 Impostiamo il flusso di video per MediaPipe
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await hands.send({ image: videoElement });
@@ -102,33 +85,49 @@
         });
         camera.start();
 
-        // Disegna il modello 3D sulla base dell'indice
+        // 📌 Disegnare le mani sul canvas
         hands.onResults((results) => {
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
-                    drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
+    if (results.multiHandLandmarks) {
+        for (const landmarks of results.multiHandLandmarks) {
+            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
+            drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
 
-                    // Posizione del punto base dell'indice (landmark 6)
-                    const indexBase = landmarks[6]; // Landmark 6 è la base dell'indice
-                    
-                    // Posiziona il modello 3D sulla base dell'indice
-                    if (ringModel) {
-                        // Mappa le coordinate 2D alla scena 3D
-                        ringModel.position.set(indexBase.x * videoElement.videoWidth, indexBase.y * videoElement.videoHeight, 0);
-                        // Aggiungi una dimensione in Z per evitare collisioni con la fotocamera
-                        ringModel.position.z = -500; // Puoi regolare questo valore
-                    }
-                }
+            // Posizione del punto indice (landmark 7)
+            const indexFingerTip = landmarks[6]; // Landmark 8 è la punta dell'indice
+            
+            // Disegna un cerchio (anello) sull'indice
+            canvasCtx.beginPath();
+            canvasCtx.arc(indexFingerTip.x * canvasElement.width, indexFingerTip.y * canvasElement.height, 20, 0, 2 * Math.PI); // 20 è la dimensione dell'anello
+            canvasCtx.strokeStyle = '#00FF00'; // Colore dell'anello
+            canvasCtx.lineWidth = 4; // Spessore dell'anello
+            canvasCtx.stroke();
+        }
+    }
+});
+
+
+        // 📌 Aggiungere un listener per l'orientamento
+        window.addEventListener('resize', updateResolution);
+        window.addEventListener('orientationchange', updateResolution);
+
+        // 📌 Funzione che aggiorna risoluzione e ridimensiona tutto
+        function updateResolution() {
+            if (window.innerWidth > window.innerHeight) {
+                // Modalità orizzontale 16:9
+                videoWidth = window.innerWidth;
+                videoHeight = window.innerHeight;
+            } else {
+                // Modalità verticale 9:16
+                videoWidth = window.innerWidth; // Usa l'intera larghezza dello schermo
+                videoHeight = window.innerHeight; // Usa l'intera altezza dello schermo
             }
+            adjustCanvasSize();
+            startCamera(); // Riavvia la fotocamera con la nuova risoluzione
+        }
 
-            // Renderizza la scena 3D
-            renderer.render(scene, camera3D);
-        });
-
-        // Avvia la fotocamera inizialmente
+        // 📌 Avvia la fotocamera inizialmente
         startCamera();
     </script>
 </body>
