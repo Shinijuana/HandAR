@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Tracking con MediaPipe</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: black; overflow: hidden; }
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain; /* Cambiato da 'cover' a 'contain' */
+            transform: scaleX(-1); /* Inverte l'immagine per emulare una fotocamera frontale */
+        }
+        canvas {
+            pointer-events: none; /* Evita interazioni con il canvas */
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="output"></canvas>
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('output');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        // 📌 Imposta la fotocamera posteriore con fallback
+        async function startCamera() {
+            let constraints = {
+                video: {
+                    width: { ideal: window.innerWidth },
+                    height: { ideal: window.innerHeight },
+                    facingMode: { ideal: "environment" } // Preferisce la posteriore
+                }
+            };
+
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = stream;
+                videoElement.onloadedmetadata = () => {
+                    videoElement.play();
+                    adjustCanvasSize();
+                };
+            } catch (err) {
+                console.error("Errore accesso webcam:", err);
+            }
+        }
+
+        // 📌 Adatta il canvas alle dimensioni dello schermo
+        function adjustCanvasSize() {
+            canvasElement.width = videoElement.videoWidth || window.innerWidth;
+            canvasElement.height = videoElement.videoHeight || window.innerHeight;
+        }
+
+        // 📌 Configura MediaPipe Hands
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@latest/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        // 📌 Usa il video come input per MediaPipe
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
+        camera.start();
+
+        // 📌 Disegna le mani in modo allineato
+        hands.onResults((results) => {
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
+                    drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: .5 }); 
+                }
+            }
+        });
+
+        // 📌 Avvia la fotocamera
+        startCamera();
+    </script>
+</body>
+</html>
