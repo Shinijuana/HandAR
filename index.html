@@ -34,8 +34,8 @@
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transform: translate(-50%, -50%); /* ✅ Centra il bottone */
-            z-index: 100; /* ✅ Il bottone è sempre sopra il canvas */
+            transform: translate(-50%, -50%);
+            z-index: 100;
         }
 
         canvas { pointer-events: none; }
@@ -51,17 +51,12 @@
         const canvasElement = document.getElementById('output');
         const canvasCtx = canvasElement.getContext('2d');
 
-        let videoWidth = window.innerWidth;
-        let videoHeight = window.innerHeight;
+        let pinchActive = false;
 
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: { ideal: videoWidth },
-                        height: { ideal: videoHeight },
-                        facingMode: { ideal: 'environment' }
-                    }
+                    video: { facingMode: "user" }
                 });
 
                 videoElement.srcObject = stream;
@@ -92,11 +87,7 @@
 
         const camera = new Camera(videoElement, {
             onFrame: async () => {
-                try {
-                    await hands.send({ image: videoElement });
-                } catch (err) {
-                    console.error("Errore MediaPipe:", err);
-                }
+                await hands.send({ image: videoElement });
             },
             width: window.innerWidth,
             height: window.innerHeight
@@ -104,30 +95,49 @@
 
         camera.start();
 
-        // ✅ Apertura popup SOLO al click del bottone
         document.getElementById("openPopup").addEventListener("click", () => {
             window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
         });
 
         hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
+
+            console.log("Hand Tracking Results:", results);
+
             if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
+                results.multiHandLandmarks.forEach((landmarks, i) => {
                     drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
                     drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
-                }
+
+                    console.log(`Mano ${i + 1} Landmark Data:`, landmarks);
+
+                    if (isPinching(landmarks) && !pinchActive) {
+                        pinchActive = true;
+                        console.log("✅ Pinch rilevato! Distanza sotto soglia.");
+                        window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
+
+                        setTimeout(() => {
+                            pinchActive = false;
+                        }, 1000);
+                    }
+                });
+            } else {
+                console.warn("⚠ Nessuna mano rilevata!");
             }
         });
 
-        window.addEventListener('resize', updateResolution);
-        window.addEventListener('orientationchange', updateResolution);
+        function isPinching(handLandmarks) {
+            let thumbTip = handLandmarks[4];  
+            let indexTip = handLandmarks[8];
 
-        function updateResolution() {
-            videoWidth = window.innerWidth;
-            videoHeight = window.innerHeight;
-            adjustCanvasSize();
-            startCamera();
+            let distance = Math.sqrt(
+                Math.pow(thumbTip.x - indexTip.x, 2) + 
+                Math.pow(thumbTip.y - indexTip.y, 2)
+            );
+
+            console.log("🔍 Distanza tra pollice e indice:", distance);
+
+            return distance < 0.05;
         }
 
         startCamera();
