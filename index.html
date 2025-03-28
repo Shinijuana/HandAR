@@ -25,7 +25,7 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 15px 25px;
-            background: #0000FF;
+            background: #00FF00;
             color: black;
             font-size: 18px;
             font-weight: bold;
@@ -50,17 +50,16 @@
         let videoWidth = window.innerWidth;
         let videoHeight = window.innerHeight;
 
-        // 📌 Avvia la fotocamera
         async function startCamera() {
-            const constraints = {
-                video: {
-                    width: { ideal: videoWidth },
-                    height: { ideal: videoHeight },
-                    facingMode: { ideal: 'environment' }
-                }
-            };
-
             try {
+                const constraints = {
+                    video: {
+                        width: { ideal: videoWidth },
+                        height: { ideal: videoHeight },
+                        facingMode: { ideal: 'environment' }
+                    }
+                };
+
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
                 videoElement.onloadedmetadata = () => {
@@ -77,7 +76,6 @@
             canvasElement.height = videoElement.videoHeight;
         }
 
-        // 📌 Impostazione di MediaPipe Hands
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@latest/${file}`
         });
@@ -91,21 +89,27 @@
 
         const camera = new Camera(videoElement, {
             onFrame: async () => {
-                await hands.send({ image: videoElement });
+                try {
+                    await hands.send({ image: videoElement });
+                } catch (err) {
+                    console.error("Errore nell'invio dei frame a MediaPipe:", err);
+                }
             },
             width: window.innerWidth,
             height: window.innerHeight
         });
+
         camera.start();
 
-        // ✅ Click sul bottone per aprire il sito
         document.getElementById("openPopup").addEventListener("click", () => {
-            window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
+            let popup = window.open("https://designopenspaces.it/", "popup", "width=800,height=600");
+            if (!popup) {
+                alert("Popup bloccato dal browser! Consenti i popup per questa pagina.");
+            }
         });
 
         hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
             if (results.multiHandLandmarks) {
                 for (const landmarks of results.multiHandLandmarks) {
                     drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
@@ -114,7 +118,6 @@
             }
         });
 
-        // 📌 Risoluzione dinamica
         window.addEventListener('resize', updateResolution);
         window.addEventListener('orientationchange', updateResolution);
 
