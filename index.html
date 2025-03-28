@@ -16,7 +16,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Impedisce il taglio dell'immagine */
+            object-fit: contain;
             transform: scaleX(-1); /* Inverte l'immagine per fotocamera frontale */
         }
         canvas {
@@ -105,12 +105,12 @@
         function updateResolution() {
             if (window.innerWidth > window.innerHeight) {
                 // Modalità orizzontale 16:9
-                videoWidth = window.innerHeight; // Invertito
-                videoHeight = window.innerWidth; // Invertito
+                videoWidth = window.innerWidth;
+                videoHeight = window.innerHeight;
             } else {
                 // Modalità verticale 9:16
-                videoWidth = window.innerWidth; // Invertito
-                videoHeight = window.innerHeight; // Invertito
+                videoWidth = window.innerHeight;
+                videoHeight = window.innerWidth;
             }
             adjustCanvasSize();
             startCamera(); // Riavvia la fotocamera con la nuova risoluzione
