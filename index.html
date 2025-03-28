@@ -105,12 +105,12 @@
         function updateResolution() {
             if (window.innerWidth > window.innerHeight) {
                 // Modalità orizzontale 16:9
-                videoWidth = window.innerWidth;
-                videoHeight = window.innerHeight;
+                videoWidth = window.innerHeight; // Invertito
+                videoHeight = window.innerWidth; // Invertito
             } else {
                 // Modalità verticale 9:16
-                videoWidth = window.innerHeight;
-                videoHeight = window.innerWidth;
+                videoWidth = window.innerWidth; // Invertito
+                videoHeight = window.innerHeight; // Invertito
             }
             adjustCanvasSize();
             startCamera(); // Riavvia la fotocamera con la nuova risoluzione
