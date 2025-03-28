@@ -87,15 +87,26 @@
 
         // 📌 Disegnare le mani sul canvas
         hands.onResults((results) => {
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
-                    drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
-                }
-            }
-        });
+    if (results.multiHandLandmarks) {
+        for (const landmarks of results.multiHandLandmarks) {
+            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
+            drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
+
+            // Posizione del punto indice (landmark 8)
+            const indexFingerTip = landmarks[8]; // Landmark 8 è la punta dell'indice
+            
+            // Disegna un cerchio (anello) sull'indice
+            canvasCtx.beginPath();
+            canvasCtx.arc(indexFingerTip.x * canvasElement.width, indexFingerTip.y * canvasElement.height, 20, 0, 2 * Math.PI); // 20 è la dimensione dell'anello
+            canvasCtx.strokeStyle = '#00FF00'; // Colore dell'anello
+            canvasCtx.lineWidth = 4; // Spessore dell'anello
+            canvasCtx.stroke();
+        }
+    }
+});
+
 
         // 📌 Aggiungere un listener per l'orientamento
         window.addEventListener('resize', updateResolution);
