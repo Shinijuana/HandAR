@@ -60,10 +60,6 @@
         });
         
 
-
-        
-    let pinchActive = false;
-
     hands.onResults((results) => {
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
