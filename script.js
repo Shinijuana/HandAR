@@ -1,10 +1,9 @@
- const videoElement = document.getElementById('video');
+const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('output');
         const canvasCtx = canvasElement.getContext('2d');
 
         let videoWidth = window.innerWidth;
         let videoHeight = window.innerHeight;
-        let pinchActive = false; // ✅ Spostato all'esterno per evitare reset continui
 
         // 📌 Avvia la fotocamera
         async function startCamera() {
@@ -60,6 +59,10 @@
         });
         
 
+
+        
+    let pinchActive = false;
+
     hands.onResults((results) => {
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
@@ -100,7 +103,6 @@
             Math.pow(thumbTip.y - indexTip.y, 2)
         );
 
-        console.log("🔍 Distanza tra pollice e indice:", distance);
         return distance < 0.05; // Considera un pinch se la distanza è inferiore a una certa soglia
     }
 
@@ -116,3 +118,4 @@
         }
 
         startCamera();
+    
