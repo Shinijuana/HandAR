@@ -20,19 +20,23 @@
             object-fit: contain;
             transform: scaleX(-1);
         }
-        #openPopup {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 10px 15px;
-            background: #00FF00;
-            color: black;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 10;
-        }
+        
+       #openPopup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    background: #0000FF;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 10;
+    transform: translate(-50%, -50%); /* Centra rispetto allo schermo */
+}
+
         canvas { pointer-events: none; }
     </style>
 </head>
@@ -147,7 +151,6 @@
             Math.pow(thumbTip.y - indexTip.y, 2)
         );
 
-        console.log("🔍 Distanza tra pollice e indice:", distance);
         return distance < 0.05; // Considera un pinch se la distanza è inferiore a una certa soglia
     }
 
