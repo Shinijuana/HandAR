@@ -17,7 +17,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             transform: scaleX(-1);
         }
 
@@ -74,8 +74,8 @@
         }
 
         // 📌 Impostazione di MediaPipe Hands
-        const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@latest/${file}`
+        const hands = new Hands({ 
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
 
         hands.setOptions({
@@ -85,23 +85,12 @@
             minTrackingConfidence: 0.5
         });
 
-        const camera = new Camera(videoElement, {
-            onFrame: async () => {
-                await hands.send({ image: videoElement });
-            },
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
-
-        camera.start();
-
-        // 📌 Rilevamento pinch con verifica sulla posizione del bottone
         hands.onResults((results) => {
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
             if (results.multiHandLandmarks) {
                 results.multiHandLandmarks.forEach((landmarks) => {
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 1 });
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
                     drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 5 });
 
                     if (isPinching(landmarks) && !pinchActive) {
@@ -140,6 +129,15 @@
             return distance < 0.05;
         }
 
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: 640,
+            height: 480
+        });
+
+        camera.start();
         startCamera();
     </script>
 </body>
